@@ -64,11 +64,14 @@ jobs:
             set +e
             gradle --no-daemon connectedDebugAndroidTest
             result=$?
-            adb shell am start -n dev.mxs.actionsdemo/.MainActivity
-            sleep 3
-            adb shell input tap 500 1050
-            sleep 1
+            # Instrumentation may leave the target app uninstalled or stopped.
+            # Install the exact APK we built before launching for screenshot capture.
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell am force-stop dev.mxs.actionsdemo || true
+            adb shell monkey -p dev.mxs.actionsdemo -c android.intent.category.LAUNCHER 1
+            sleep 4
             adb exec-out screencap -p > screenshots/android-emulator.png
+            test -s screenshots/android-emulator.png
             exit "$result"
       - name: Upload emulator screenshot
         if: always()
