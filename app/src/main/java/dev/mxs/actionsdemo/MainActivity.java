@@ -1,37 +1,76 @@
 package dev.mxs.actionsdemo;
+
 import android.app.Activity;
 import android.os.Bundle;
-import android.graphics.Color;
-import android.view.Gravity;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.content.Intent;
+import android.net.Uri;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebSettings;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private int count = 0;
-    @Override public void onCreate(Bundle state) {
-        super.onCreate(state);
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setPadding(32, 32, 32, 32);
-        layout.setBackgroundColor(Color.rgb(240, 246, 255));
-        TextView title = new TextView(this);
-        title.setText("Android Actions Demo");
-        title.setTextSize(26);
-        title.setTextColor(Color.rgb(30, 60, 100));
-        title.setGravity(Gravity.CENTER);
-        TextView counter = new TextView(this);
-        counter.setTextSize(22);
-        counter.setGravity(Gravity.CENTER);
-        counter.setPadding(0, 32, 0, 24);
-        counter.setText("点击次数：0");
-        Button button = new Button(this);
-        button.setText("点我 +1");
-        button.setOnClickListener(v -> counter.setText("点击次数：" + (++count)));
-        layout.addView(title, new LinearLayout.LayoutParams(-1, -2));
-        layout.addView(counter, new LinearLayout.LayoutParams(-1, -2));
-        layout.addView(button, new LinearLayout.LayoutParams(-1, -2));
-        setContentView(layout);
+    private static final String HOME = "https://manxisuo.github.io/interactive-labs/";
+    private WebView webView;
+
+    @Override public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        webView = new WebView(this);
+        webView.setBackgroundColor(0xfff6f8ff);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(false);
+        settings.setAllowContentAccess(false);
+        settings.setMediaPlaybackRequiresUserGesture(true);
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String host = uri.getHost();
+                if ("https".equalsIgnoreCase(uri.getScheme())
+                        && "manxisuo.github.io".equalsIgnoreCase(host)
+                        && uri.getPath() != null
+                        && uri.getPath().startsWith("/interactive-labs/")) {
+                    return false;
+                }
+                if (!request.isForMainFrame()) return false;
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "无法打开链接", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+        });
+        setContentView(webView);
+        if (savedInstanceState == null) {
+            webView.loadUrl(HOME);
+        } else {
+            webView.restoreState(savedInstanceState);
+        }
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        webView.saveState(state);
+        super.onSaveInstanceState(state);
+    }
+
+    @Override public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override protected void onDestroy() {
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 }
