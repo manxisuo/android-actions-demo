@@ -13,13 +13,13 @@ import static org.junit.Assert.*;
 public class CounterUiTest {
     @Test public void tappingButtonIncrementsCounter() {
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        var context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        var intent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        android.content.Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        android.content.Intent intent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         assertNotNull("Launch intent", intent);
         intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
         context.startActivity(intent);
         assertNotNull("Initial counter", device.wait(Until.findObject(By.text("点击次数：0")), 10000));
-        var button = device.findObject(By.text("点我 +1"));
+        androidx.test.uiautomator.UiObject2 button = device.findObject(By.text("点我 +1"));
         assertNotNull("Counter button", button);
         button.click();
         assertNotNull("Updated counter", device.wait(Until.findObject(By.text("点击次数：1")), 5000));
